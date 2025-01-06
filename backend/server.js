@@ -15,6 +15,8 @@ app.use(cors({
 }));
 
 app.use(express.json());
+
+// Statik dosyalar için public klasörü
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Loglama middleware'i
@@ -146,9 +148,19 @@ app.post('/api/events/:eventId/responses', async (req, res) => {
   }
 });
 
-// Catch-all route for SPA
-app.get('*', (req, res) => {
+// Ana sayfa için index.html
+app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Catch-all route for API
+app.use('/api/*', (req, res) => {
+  res.status(404).json({
+    error: 'API endpoint bulunamadı',
+    path: req.path,
+    method: req.method,
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Error handling middleware

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DAVET API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .endpoint {
+            background: #f5f5f5;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .method {
+            font-weight: bold;
+            color: #0066cc;
+        }
+    </style>
+</head>
+<body>
+    <h1>DAVET API Servisi</h1>
+    <div class="endpoint">
+        <span class="method">GET</span> /api/events - Tüm etkinlikleri listeler
+    </div>
+    <div class="endpoint">
+        <span class="method">POST</span> /api/events - Yeni etkinlik oluşturur
+    </div>
+    <div class="endpoint">
+        <span class="method">POST</span> /api/events/:eventId/responses - Etkinliğe yanıt ekler
+    </div>
+    <div class="endpoint">
+        <span class="method">GET</span> /api/status - API durumunu kontrol eder
+    </div>
+</body>
+</html> 
