@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Building2, Users, Plus } from 'lucide-react';
-import { employees } from './data/employees';
+import { Building2, Users, Plus, Settings } from 'lucide-react';
 import { EventList } from './components/EventList';
 import { ResponseTable } from './components/ResponseTable';
 import { EventForm } from './components/EventForm';
@@ -8,6 +7,8 @@ import { AdminAuth } from './components/auth/AdminAuth';
 import { Header } from './components/Header';
 import { Event, Response } from './types';
 import { getEvents, createEvent, addResponse } from './utils/api';
+import { EmployeeManagement } from './components/EmployeeManagement';
+import { EventEditForm } from './components/EventEditForm';
 
 function App() {
   const [events, setEvents] = useState<Event[]>([]);
@@ -17,6 +18,8 @@ function App() {
   const [showAdminAuth, setShowAdminAuth] = useState(false);
   const [currentEmployeeId, setCurrentEmployeeId] = useState(1);
   const [showEventForm, setShowEventForm] = useState(false);
+  const [showEmployeeManagement, setShowEmployeeManagement] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [newEvent, setNewEvent] = useState<Omit<Event, 'id'>>({
@@ -29,25 +32,24 @@ function App() {
     visibleTo: []
   });
 
-  // Etkinlikleri yükle
   useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        setLoading(true);
-        const data = await getEvents();
-        console.log('Gelen etkinlikler:', data);
-        setEvents(data);
-        setError(null);
-      } catch (err) {
-        console.error('Etkinlik yükleme hatası:', err);
-        setError('Etkinlikler yüklenirken bir hata oluştu');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchEvents();
   }, []);
+
+  const fetchEvents = async () => {
+    try {
+      setLoading(true);
+      const data = await getEvents();
+      console.log('Gelen etkinlikler:', data);
+      setEvents(data);
+      setError(null);
+    } catch (err) {
+      console.error('Etkinlik yükleme hatası:', err);
+      setError('Etkinlikler yüklenirken bir hata oluştu');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleResponseChange = async (employeeId: number, attending: boolean) => {
     if (!selectedEventId) return;
@@ -124,6 +126,13 @@ function App() {
     setShowAdminAuth(false);
   };
 
+  const handleEventUpdate = (updatedEvent: Event) => {
+    setEvents(prev => prev.map(event => 
+      event._id === updatedEvent._id ? updatedEvent : event
+    ));
+    setEditingEvent(null);
+  };
+
   // Filter events based on visibility
   const visibleEvents = events.filter(event => 
     isAdmin || event.visibleTo.includes(currentEmployeeId)
@@ -158,35 +167,35 @@ function App() {
             onAdminToggle={handleAdminToggle}
           />
 
+          {isAdmin && (
+            <div className="mb-6 flex gap-4">
+              <button
+                onClick={() => setShowEventForm(true)}
+                className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+              >
+                <Plus className="w-5 h-5 mr-2" />
+                Yeni Davet Ekle
+              </button>
+              <button
+                onClick={() => setShowEmployeeManagement(true)}
+                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                <Users className="w-5 h-5 mr-2" />
+                Çalışan Yönetimi
+              </button>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-1">
               <div className="space-y-4">
-                {isAdmin && (
-                  <div className="bg-white rounded-lg shadow-md p-4">
-                    {showEventForm ? (
-                      <EventForm
-                        newEvent={newEvent}
-                        onEventChange={setNewEvent}
-                        onSubmit={handleAddEvent}
-                        onCancel={() => setShowEventForm(false)}
-                      />
-                    ) : (
-                      <button
-                        onClick={() => setShowEventForm(true)}
-                        className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                      >
-                        <Plus className="w-5 h-5" />
-                        <span>Yeni Davet Ekle</span>
-                      </button>
-                    )}
-                  </div>
-                )}
                 <EventList
                   events={visibleEvents}
                   onSelectEvent={setSelectedEventId}
                   selectedEventId={selectedEventId}
                   isAdmin={isAdmin}
                   onDeleteEvent={handleDeleteEvent}
+                  onEditEvent={setEditingEvent}
                 />
               </div>
             </div>
@@ -194,13 +203,26 @@ function App() {
               {selectedEvent ? (
                 <div className="space-y-6">
                   <div className="bg-white rounded-lg shadow-md p-6">
-                    <h2 className="text-xl font-semibold mb-2">
-                      {selectedEvent.companyName}
-                    </h2>
-                    <p className="text-gray-600">Tarih: {selectedEvent.date}</p>
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h2 className="text-xl font-semibold mb-2">
+                          {selectedEvent.companyName}
+                        </h2>
+                        <p className="text-gray-600">Tarih: {selectedEvent.date}</p>
+                      </div>
+                      {isAdmin && (
+                        <button
+                          onClick={() => setEditingEvent(selectedEvent)}
+                          className="flex items-center px-3 py-1 text-blue-600 hover:text-blue-800"
+                        >
+                          <Settings className="w-5 h-5 mr-1" />
+                          Düzenle
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <ResponseTable
-                    employees={employees.filter(emp => 
+                    employees={visibleEvents.filter(emp => 
                       isAdmin || selectedEvent.visibleTo.includes(emp.id)
                     )}
                     responses={responses.filter(r => r.eventId === selectedEventId)}
@@ -219,7 +241,31 @@ function App() {
           </div>
         </div>
       </div>
+
       {showAdminAuth && <AdminAuth onLogin={handleAdminAuth} />}
+      
+      {showEventForm && (
+        <EventForm
+          newEvent={newEvent}
+          onEventChange={setNewEvent}
+          onSubmit={handleAddEvent}
+          onCancel={() => setShowEventForm(false)}
+        />
+      )}
+
+      {showEmployeeManagement && (
+        <EmployeeManagement
+          onClose={() => setShowEmployeeManagement(false)}
+        />
+      )}
+
+      {editingEvent && (
+        <EventEditForm
+          event={editingEvent}
+          onClose={() => setEditingEvent(null)}
+          onUpdate={handleEventUpdate}
+        />
+      )}
     </div>
   );
 }

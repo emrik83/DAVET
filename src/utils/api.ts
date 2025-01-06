@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { Employee, Event } from '../types';
 
 const API_URL = import.meta.env.PROD 
   ? 'https://davet-f52s.onrender.com/api'
@@ -48,7 +49,8 @@ api.interceptors.response.use(
   }
 );
 
-export const createEvent = async (eventData: any) => {
+// Event API fonksiyonları
+export const createEvent = async (eventData: Partial<Event>) => {
   try {
     const response = await api.post('/events', eventData);
     return response.data;
@@ -68,12 +70,63 @@ export const getEvents = async () => {
   }
 };
 
+export const updateEvent = async (eventId: string, eventData: Partial<Event>) => {
+  try {
+    const response = await api.put(`/events/${eventId}`, eventData);
+    return response.data;
+  } catch (error) {
+    console.error('Event güncelleme hatası:', error);
+    throw error;
+  }
+};
+
 export const addResponse = async (eventId: string, responseData: any) => {
   try {
     const response = await api.post(`/events/${eventId}/responses`, responseData);
     return response.data;
   } catch (error) {
     console.error('Yanıt ekleme hatası:', error);
+    throw error;
+  }
+};
+
+// Çalışan API fonksiyonları
+export const getEmployees = async () => {
+  try {
+    const response = await api.get('/employees');
+    return response.data;
+  } catch (error) {
+    console.error('Çalışan getirme hatası:', error);
+    throw error;
+  }
+};
+
+export const createEmployee = async (employeeData: Partial<Employee>) => {
+  try {
+    const response = await api.post('/employees', employeeData);
+    return response.data;
+  } catch (error) {
+    console.error('Çalışan oluşturma hatası:', error);
+    throw error;
+  }
+};
+
+export const updateEmployee = async (employeeId: number, employeeData: Partial<Employee>) => {
+  try {
+    const response = await api.put(`/employees/${employeeId}`, employeeData);
+    return response.data;
+  } catch (error) {
+    console.error('Çalışan güncelleme hatası:', error);
+    throw error;
+  }
+};
+
+export const deleteEmployee = async (employeeId: number) => {
+  try {
+    const response = await api.delete(`/employees/${employeeId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Çalışan silme hatası:', error);
     throw error;
   }
 };

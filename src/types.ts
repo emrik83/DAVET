@@ -25,10 +25,23 @@ export interface Employee {
   name: string;
   department: string;
   role: string;
+  active: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface ApiResponse<T> {
   data: T;
   message?: string;
   status: number;
+}
+
+export interface EventFormData {
+  companyName: string;
+  date: string;
+  location: string;
+  startTime: string;
+  endTime: string;
+  transportation: string;
+  visibleTo: number[];
 }
