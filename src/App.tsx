@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Building2, Users, Plus } from 'lucide-react';
 import { employees } from './data/employees';
 import { EventList } from './components/EventList';
@@ -7,29 +7,18 @@ import { EventForm } from './components/EventForm';
 import { AdminAuth } from './components/auth/AdminAuth';
 import { Header } from './components/Header';
 import { Event, Response } from './types';
-
-// Initial events data
-const initialEvents: Event[] = [
-  {
-    id: 1,
-    companyName: 'ARKETIPO DESIGN',
-    date: '2024-03-20',
-    location: 'İstanbul Ofis',
-    startTime: '09:00',
-    endTime: '17:00',
-    transportation: 'service',
-    visibleTo: employees.map(emp => emp.id) // Initially visible to all employees
-  },
-];
+import { getEvents, createEvent, addResponse } from './utils/api';
 
 function App() {
-  const [events, setEvents] = useState<Event[]>(initialEvents);
+  const [events, setEvents] = useState<Event[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<number | null>(null);
   const [responses, setResponses] = useState<Response[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showAdminAuth, setShowAdminAuth] = useState(false);
   const [currentEmployeeId, setCurrentEmployeeId] = useState(1);
   const [showEventForm, setShowEventForm] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [newEvent, setNewEvent] = useState<Omit<Event, 'id'>>({
     companyName: '',
     date: '',
@@ -40,42 +29,78 @@ function App() {
     visibleTo: []
   });
 
-  const handleResponseChange = (employeeId: number, attending: boolean) => {
-    if (!selectedEventId) return;
-    setResponses((prev) => {
-      const existingResponse = prev.find(
-        (r) => r.eventId === selectedEventId && r.employeeId === employeeId
-      );
-      if (existingResponse) {
-        return prev.map((r) =>
-          r.eventId === selectedEventId && r.employeeId === employeeId
-            ? { ...r, attending }
-            : r
-        );
+  // Etkinlikleri yükle
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        setLoading(true);
+        const data = await getEvents();
+        console.log('Gelen etkinlikler:', data);
+        setEvents(data);
+        setError(null);
+      } catch (err) {
+        console.error('Etkinlik yükleme hatası:', err);
+        setError('Etkinlikler yüklenirken bir hata oluştu');
+      } finally {
+        setLoading(false);
       }
-      return [...prev, { eventId: selectedEventId, employeeId, attending }];
-    });
+    };
+
+    fetchEvents();
+  }, []);
+
+  const handleResponseChange = async (employeeId: number, attending: boolean) => {
+    if (!selectedEventId) return;
+    try {
+      const response = await addResponse(selectedEventId.toString(), {
+        employeeId,
+        response: attending ? 'attending' : 'not-attending'
+      });
+      
+      setResponses((prev) => {
+        const existingResponse = prev.find(
+          (r) => r.eventId === selectedEventId && r.employeeId === employeeId
+        );
+        if (existingResponse) {
+          return prev.map((r) =>
+            r.eventId === selectedEventId && r.employeeId === employeeId
+              ? { ...r, attending }
+              : r
+          );
+        }
+        return [...prev, { eventId: selectedEventId, employeeId, attending }];
+      });
+    } catch (err) {
+      console.error('Yanıt gönderme hatası:', err);
+      alert('Yanıtınız kaydedilirken bir hata oluştu');
+    }
   };
 
   const handleEmployeeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setCurrentEmployeeId(Number(event.target.value));
   };
 
-  const handleAddEvent = (e: React.FormEvent) => {
+  const handleAddEvent = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newEvent.companyName || !newEvent.date) return;
-    const newId = Math.max(0, ...events.map(e => e.id)) + 1;
-    setEvents(prev => [...prev, { ...newEvent, id: newId }]);
-    setNewEvent({
-      companyName: '',
-      date: '',
-      location: '',
-      startTime: '',
-      endTime: '',
-      transportation: 'service',
-      visibleTo: []
-    });
-    setShowEventForm(false);
+    
+    try {
+      const createdEvent = await createEvent(newEvent);
+      setEvents(prev => [...prev, createdEvent]);
+      setNewEvent({
+        companyName: '',
+        date: '',
+        location: '',
+        startTime: '',
+        endTime: '',
+        transportation: 'service',
+        visibleTo: []
+      });
+      setShowEventForm(false);
+    } catch (err) {
+      console.error('Etkinlik oluşturma hatası:', err);
+      alert('Etkinlik oluşturulurken bir hata oluştu');
+    }
   };
 
   const handleDeleteEvent = (eventId: number) => {
@@ -105,6 +130,22 @@ function App() {
   );
 
   const selectedEvent = events.find((e) => e.id === selectedEventId);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-xl text-gray-600">Yükleniyor...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-xl text-red-600">{error}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-100">
