@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API_URL = import.meta.env.PROD 
-  ? '/api'
+  ? 'https://davet-f52s.onrender.com/api'
   : 'http://localhost:5000/api';
 
 const api = axios.create({
@@ -9,12 +9,34 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true,
 });
+
+// Request interceptor
+api.interceptors.request.use(
+  (config) => {
+    console.log('API İsteği:', {
+      method: config.method,
+      url: `${API_URL}${config.url}`,
+      data: config.data
+    });
+    return config;
+  },
+  (error) => {
+    console.error('API İstek Hatası:', error);
+    return Promise.reject(error);
+  }
+);
 
 // Response interceptor
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log('API Yanıtı:', {
+      url: response.config.url,
+      status: response.status,
+      data: response.data
+    });
+    return response;
+  },
   (error) => {
     console.error('API Hatası:', {
       url: error.config?.url,

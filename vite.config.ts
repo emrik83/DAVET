@@ -18,13 +18,5 @@ export default defineConfig({
   server: {
     port: 5174,
     host: true,
-    proxy: {
-      '/api': {
-        target: 'https://davet-backend.onrender.com',
-        changeOrigin: true,
-        secure: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
-      },
-    },
   },
 });
