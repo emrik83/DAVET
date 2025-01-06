@@ -1,112 +1,85 @@
 import React from 'react';
-import { Check, X, FileDown } from 'lucide-react';
-import { Employee } from '../data/employees';
-import { Response } from '../types';
-import { exportToExcel } from '../utils/excelExport';
-import { AttendanceSummary } from './AttendanceSummary';
+import { Event, Employee, Response } from '../types';
+import { Check, X } from 'lucide-react';
 
 interface ResponseTableProps {
   employees: Employee[];
   responses: Response[];
   onResponseChange: (employeeId: number, attending: boolean) => void;
-  isAdmin?: boolean;
-  currentEmployeeId?: number;
-  selectedEvent?: { companyName: string; date: string };
+  isAdmin: boolean;
+  currentEmployeeId: number;
+  selectedEvent: Event;
 }
 
 export const ResponseTable: React.FC<ResponseTableProps> = ({
   employees,
   responses,
   onResponseChange,
-  isAdmin = false,
+  isAdmin,
   currentEmployeeId,
-  selectedEvent,
+  selectedEvent
 }) => {
-  const handleExport = () => {
-    if (!selectedEvent) return;
-    exportToExcel(employees, responses, selectedEvent);
+  const getResponse = (employeeId: number) => {
+    return responses.find(r => r.eventId === selectedEvent.id && r.employeeId === employeeId);
   };
-
-  // Filter employees based on admin status or current employee
-  const displayEmployees = isAdmin
-    ? employees
-    : employees.filter((emp) => emp.id === currentEmployeeId);
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
-      {isAdmin && (
-        <>
-          <div className="p-4">
-            <AttendanceSummary 
-              responses={responses} 
-              totalEmployees={employees.length} 
-            />
-          </div>
-          <div className="p-4 bg-gray-50 border-b border-gray-200">
-            <button
-              onClick={handleExport}
-              className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-            >
-              <FileDown className="w-5 h-5" />
-              <span>Excel'e Aktar</span>
-            </button>
-          </div>
-        </>
-      )}
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Çalışan
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Katılım Durumu
-            </th>
+      <table className="min-w-full">
+        <thead>
+          <tr className="bg-gray-50">
+            <th className="px-4 py-2 text-left font-medium text-gray-700">Çalışan</th>
+            <th className="px-4 py-2 text-center font-medium text-gray-700">Katılım Durumu</th>
+            {isAdmin && (
+              <th className="px-4 py-2 text-right font-medium text-gray-700">İşlemler</th>
+            )}
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {displayEmployees.map((employee) => {
-            const response = responses.find((r) => r.employeeId === employee.id);
+        <tbody>
+          {employees.map(employee => {
+            const response = getResponse(employee.id);
+            const isCurrentUser = employee.id === currentEmployeeId;
+
             return (
-              <tr key={employee.id}>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">{employee.name}</div>
+              <tr key={employee.id} className="border-t">
+                <td className="px-4 py-2">
+                  {employee.name}
+                  {isCurrentUser && (
+                    <span className="ml-2 text-sm text-blue-600">(Siz)</span>
+                  )}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {isAdmin ? (
-                    <div className="flex items-center space-x-2">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        response?.attending
-                          ? 'bg-green-100 text-green-800'
-                          : response?.attending === false
-                          ? 'bg-red-100 text-red-800'
-                          : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {response?.attending === true
-                          ? 'Katılacak'
-                          : response?.attending === false
-                          ? 'Katılmayacak'
-                          : 'Yanıt Bekliyor'}
-                      </span>
-                    </div>
+                <td className="px-4 py-2 text-center">
+                  {response ? (
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      response.attending
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800'
+                    }`}>
+                      {response.attending ? 'Katılıyor' : 'Katılmıyor'}
+                    </span>
                   ) : (
-                    <div className="flex items-center space-x-4">
+                    <span className="text-gray-500">Yanıt Bekliyor</span>
+                  )}
+                </td>
+                <td className="px-4 py-2 text-right">
+                  {(isAdmin || isCurrentUser) && (
+                    <div className="flex justify-end gap-2">
                       <button
                         onClick={() => onResponseChange(employee.id, true)}
-                        className={`p-2 rounded-full transition-colors ${
-                          response?.attending === true
+                        className={`p-1 rounded ${
+                          response?.attending
                             ? 'bg-green-100 text-green-600'
-                            : 'hover:bg-gray-100'
+                            : 'hover:bg-green-100 text-gray-400 hover:text-green-600'
                         }`}
                       >
                         <Check className="w-5 h-5" />
                       </button>
                       <button
                         onClick={() => onResponseChange(employee.id, false)}
-                        className={`p-2 rounded-full transition-colors ${
+                        className={`p-1 rounded ${
                           response?.attending === false
                             ? 'bg-red-100 text-red-600'
-                            : 'hover:bg-gray-100'
+                            : 'hover:bg-red-100 text-gray-400 hover:text-red-600'
                         }`}
                       >
                         <X className="w-5 h-5" />
