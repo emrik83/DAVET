@@ -18,9 +18,14 @@ export default defineConfig({
         entryFileNames: 'assets/[name].[hash].js',
       },
     },
+    target: 'es2015',
+    minify: 'esbuild'
   },
   server: {
     port: 5174,
     host: true,
   },
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-router-dom']
+  }
 });
