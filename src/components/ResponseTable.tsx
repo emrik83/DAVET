@@ -30,23 +30,23 @@ export const ResponseTable: React.FC<ResponseTableProps> = ({
           <tr className="bg-gray-50">
             <th className="px-4 py-2 text-left">Ad Soyad</th>
             <th className="px-4 py-2 text-center">Durum</th>
-            {!isAdmin && <th className="px-4 py-2 text-right">İşlem</th>}
+            {(isAdmin || currentEmployeeId) && (
+              <th className="px-4 py-2 text-right">İşlem</th>
+            )}
           </tr>
         </thead>
         <tbody>
           {employees.map(employee => {
             const response = getResponse(employee.id);
-            const isCurrentUser = employee.id === currentEmployeeId;
+            const isCurrentEmployee = employee.id === currentEmployeeId;
+            const canRespond = isAdmin || isCurrentEmployee;
 
             return (
               <tr key={employee.id} className="border-t">
-                <td className="px-4 py-2">
-                  {employee.name}
-                  {isCurrentUser && !isAdmin && " (Siz)"}
-                </td>
+                <td className="px-4 py-2">{employee.name}</td>
                 <td className="px-4 py-2 text-center">
                   {response ? (
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                    <span className={`px-2 py-1 rounded text-sm ${
                       response.attending 
                         ? 'bg-green-100 text-green-800' 
                         : 'bg-red-100 text-red-800'
@@ -57,30 +57,30 @@ export const ResponseTable: React.FC<ResponseTableProps> = ({
                     <span className="text-gray-500">Yanıt Bekleniyor</span>
                   )}
                 </td>
-                {!isAdmin && isCurrentUser && (
+                {canRespond && (
                   <td className="px-4 py-2 text-right">
                     <div className="flex justify-end gap-2">
                       <button
                         onClick={() => onResponseChange(employee.id, true)}
-                        className={`px-3 py-1 rounded-md flex items-center ${
-                          response?.attending 
-                            ? 'bg-green-600 text-white' 
-                            : 'bg-gray-100 text-gray-600 hover:bg-green-50 hover:text-green-600'
+                        className={`p-1 rounded ${
+                          response?.attending
+                            ? 'bg-green-100 text-green-600'
+                            : 'text-green-600 hover:bg-green-100'
                         }`}
+                        title="Katılıyorum"
                       >
-                        <Check className="w-4 h-4 mr-1" />
-                        Katılıyorum
+                        <Check className="w-5 h-5" />
                       </button>
                       <button
                         onClick={() => onResponseChange(employee.id, false)}
-                        className={`px-3 py-1 rounded-md flex items-center ${
+                        className={`p-1 rounded ${
                           response?.attending === false
-                            ? 'bg-red-600 text-white'
-                            : 'bg-gray-100 text-gray-600 hover:bg-red-50 hover:text-red-600'
+                            ? 'bg-red-100 text-red-600'
+                            : 'text-red-600 hover:bg-red-100'
                         }`}
+                        title="Katılmıyorum"
                       >
-                        <X className="w-4 h-4 mr-1" />
-                        Katılmıyorum
+                        <X className="w-5 h-5" />
                       </button>
                     </div>
                   </td>
@@ -89,34 +89,6 @@ export const ResponseTable: React.FC<ResponseTableProps> = ({
             );
           })}
         </tbody>
-        {isAdmin && (
-          <tfoot>
-            <tr className="bg-gray-50">
-              <td colSpan={2} className="px-4 py-3">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <span className="font-medium">Toplam: </span>
-                    {employees.length} kişi
-                  </div>
-                  <div className="flex gap-4">
-                    <div>
-                      <span className="font-medium text-green-600">Katılacak: </span>
-                      {responses.filter(r => r.attending).length} kişi
-                    </div>
-                    <div>
-                      <span className="font-medium text-red-600">Katılmayacak: </span>
-                      {responses.filter(r => !r.attending).length} kişi
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-600">Yanıt Bekleyen: </span>
-                      {employees.length - responses.length} kişi
-                    </div>
-                  </div>
-                </div>
-              </td>
-            </tr>
-          </tfoot>
-        )}
       </table>
     </div>
   );

@@ -37,9 +37,8 @@ export const EmployeeManagement: React.FC<EmployeeManagementProps> = ({ onClose 
     e.preventDefault();
     try {
       const savedEmployee = await createEmployee({
-        ...newEmployee,
-        department: 'Genel',
-        role: 'Çalışan'
+        name: newEmployee.name,
+        active: true
       });
       setEmployees(prev => [...prev, savedEmployee]);
       setNewEmployee({ name: '' });
@@ -143,6 +142,7 @@ export const EmployeeManagement: React.FC<EmployeeManagementProps> = ({ onClose 
                     <button
                       onClick={() => handleDeleteEmployee(employee.id)}
                       className="p-1 text-red-600 hover:text-red-800"
+                      title="Çalışanı Sil"
                     >
                       <UserMinus className="w-5 h-5" />
                     </button>
